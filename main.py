@@ -137,7 +137,7 @@ class Bullet:
 def enemy_shoot(enemy):
     enemy.last_shoot = pyxel.frame_count
     global enemy_bullets
-    enemy_bullets.append(Bullet(enemy.x, enemy.y+8, enemy.speed+2))
+    enemy_bullets.append(Bullet(enemy.x, enemy.y + 8, enemy.speed + 2))
     return enemy_bullets
 
 
@@ -190,7 +190,7 @@ def enemy_spawn(liste):
     if levels[level][u] <= 0:
         del levels[level][u]
 
-    x = randint(3, frame_width-3-8)
+    x = randint(3, frame_width - 3 - 8)
     y = randint(3, 10)
 
     if u == 'enemy1':
@@ -210,11 +210,10 @@ def enemy_spawn(liste):
 def life_update(lives):
     global pu_choices, score
     for enemy in enemies:
-        if enemy.x <= player_x+8 and enemy.y <= player_y+8 and enemy.x+8 >= player_x and enemy.y+8 >= player_y:
+        if enemy.x <= player_x + 8 and enemy.y <= player_y + 8 and enemy.x + 8 >= player_x and enemy.y + 8 >= player_y:
             enemies.remove(enemy)
             score += enemy.pts_on_death
             lives -= 1
-            pu_choices.append(4)
             if lives == 0:
                 pyxel.playm(3)
     return lives
@@ -223,7 +222,8 @@ def life_update(lives):
 def kill_enemies():
     for enemy in enemies:
         for shoot in shoots:
-            if enemy.x <= shoot[0]+2 and enemy.y <= shoot[1]+6 and enemy.x+8 >= shoot[0] and enemy.y+8 >= shoot[1]:
+            if (nb_shoots == 1 and enemy.x <= shoot[0] + 2 and enemy.y <= shoot[1] + 6 and enemy.x + 8 >= shoot[0] and enemy.y + 8 >= shoot[1])\
+                    or (nb_shoots == 2 and enemy.x <= shoot[0] + 6 and enemy.y <= shoot[1] + 6 and enemy.x + 8 >= shoot[0] and enemy.y + 8 >= shoot[1]):
                 enemy_x = enemy.x
                 enemy_y = enemy.y
                 enemy.vie -= 1
@@ -231,7 +231,7 @@ def kill_enemies():
                     enemies.remove(enemy)
                     global score
                     score += enemy.pts_on_death
-                    if randint(1, 10) == 10:
+                    if randint(9, 10) == 10:
                         spawn_power_up(enemy_x, enemy_y)
                 shoots.remove(shoot)
     return shoots, enemies
@@ -245,7 +245,7 @@ def spawn_power_up(x, y):
 
 def draw_pu():
     for pu in power_ups:
-        pyxel.blt(pu[0], pu[1], 0, pu[2]*8, 80, 8, 8, 0)
+        pyxel.blt(pu[0], pu[1], 0, (pu[2] - 1) * 8, 80, 8, 8, 0)
 
 
 def move_pu():
@@ -257,33 +257,31 @@ def move_pu():
 def use_pu(power_ups, speed, shoot_delay, nb_shoots, vies):
     global pu_choices
     for pu in power_ups:
-        if pu[0] <= player_x+8 and pu[1] <= player_y+8 and pu[0]+8 >= player_x and pu[1]+8 >= player_y:
+        if pu[0] <= player_x + 8 and pu[1] <= player_y + 8 and pu[0] + 8 >= player_x and pu[1] + 8 >= player_y:
             pyxel.playm(0)
-            if pu[2] == 0:
+            if pu[2] == 1:
                 speed += 1
                 power_ups.remove(pu)
                 pu_choices.remove(1)
-            if pu[2] == 1:
+            if pu[2] == 2:
                 shoot_delay /= 2
                 power_ups.remove(pu)
                 if shoot_delay <= 5:
                     pu_choices.remove(2)
-            if pu[2] == 2:
+            if pu[2] == 3:
                 nb_shoots += 1
                 power_ups.remove(pu)
                 pu_choices.remove(3)
-            if pu[2] == 3:
+            if pu[2] == 4:
                 vies += 1
                 power_ups.remove(pu)
-                if vies == 3:
-                    pu_choices.remove(4)
     return power_ups, speed, shoot_delay, nb_shoots, vies
-     
+
 
 def update():
     global vies
     if vies > 0:
-        global player_x, player_y, shoots, score, enemies, enemy_to_spawn, direction, power_ups, speed, shoot_delay, nb_shoots, level
+        global player_x, player_y, shoots, score, enemies, enemy_to_spawn, direction, power_ups, speed, shoot_delay, nb_shoots, level, transition, time
         player_x, player_y, direction = player_move(player_x, player_y)
         shoots = new_shoot(shoots)
         shoots = move_shoots(shoots)
@@ -302,19 +300,19 @@ def update():
             enemy.update()
             if enemy.y >= 128:
                 enemy.y = 0
-                enemy.x = randint(3, 128-3-8)
-        
+                enemy.x = randint(3, 128 - 3 - 8)
+
         for bullet in enemy_bullets:
-                bullet.y += bullet.speed
-                if bullet.y >= frame_height:
-                    enemy_bullets.remove(bullet)
-                elif player_x + 8 >= bullet.x and bullet.x + 8 >= player_x and player_y + 8 >= bullet.y and bullet.y + 8 >= player_y:
-                    enemy_bullets.remove(bullet)
-                    vies -= 1
+            bullet.y += bullet.speed
+            if bullet.y >= frame_height:
+                enemy_bullets.remove(bullet)
+            elif player_x + 8 >= bullet.x and bullet.x + 8 >= player_x and player_y + 8 >= bullet.y and bullet.y + 8 >= player_y:
+                enemy_bullets.remove(bullet)
+                vies -= 1
 
         vies = life_update(vies)
         if len(enemies) == 0 and enemy_to_spawn == 0:
-                level += 1
+            level += 1
 
 
 def draw():
@@ -338,9 +336,11 @@ def draw():
             for bullet in enemy_bullets:
                 pyxel.blt(bullet.x, bullet.y, 0, 0, 16, 8, 8, 0)
             draw_pu()
+
+
     else:
         pyxel.blt(33, 60, 0, 0, 137, 61, 7)
         pyxel.text(37, 70, f"SCORE : {score}", 7)
-        
+
 
 pyxel.run(update, draw)
