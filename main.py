@@ -231,7 +231,7 @@ def kill_enemies():
                     enemies.remove(enemy)
                     global score
                     score += enemy.pts_on_death
-                    if randint(9, 10) == 10:
+                    if randint(1, 10) == 10:
                         spawn_power_up(enemy_x, enemy_y)
                 shoots.remove(shoot)
     return shoots, enemies
